@@ -1,0 +1,204 @@
+% GTPR Test
+
+clear; clc;
+
+% Distance of Actuators Rotational Points, and Origin
+a1 = 0.3;
+a2 = 0.4;   
+a3 = 0.5;
+
+% The ration of the length of the work triangle compared to the base
+% triangle
+h = 0.5;
+e1 = a1/h;
+e2 = a2/h;
+e3 = a3/h;
+
+% Length of the upper arms
+L1 = 0.57;
+L2 = 0.62;
+L3 = 0.67;
+
+% Length of the lower arms
+l1 = 0.9;
+l2 = 1;
+l3 = 0.9;
+
+% Angle between the second and first arm, third and first arm, respectively
+alpha12 = deg2rad(40);
+alpha13 = deg2rad(330);
+
+% Mass of the upper arms
+mL1 = 1;
+mL2 = 1;
+mL3 = 1;
+
+% Mass of the lower arms
+ml1 = 1;
+ml2 = 1;
+ml3 = 1;
+
+% Mass of work triangle
+mW = 1;
+
+% External force acting on the work triangle (ex: due to mass to be moved)
+Fext = [0 0 5];
+
+% Upper arm inertia
+IL0_1 = diag([1e-2;1e-2;1e-2]);
+IL0_2 = diag([1e-2;1e-2;1e-2]);
+IL0_3 = diag([1e-2;1e-2;1e-2]);
+
+% Lower arm inertia
+Il0_1 = diag([1e-2;1e-2;1e-2]);
+Il0_2 = diag([1e-2;1e-2;1e-2]);
+Il0_3 = diag([1e-2;1e-2;1e-2]);
+
+% Actuator angles
+thetas = deg2rad([0;0;0]); % [rad]
+
+% Gravity acting along Z axis
+g = -9.81;
+
+% Angular velocity of the actuator
+dthetas = deg2rad([10;10;10]);
+
+% Angular acceleration of the actuator
+ddthetas = deg2rad([1;1;1]);
+
+% Velocity of the Work Triangle
+v = [0;0;0.1];
+
+% Acceleration of the work triangle
+a = [0;0;0.05];
+
+% How to draw the GTPR mechanism in plot:
+% depiction = 'real';
+depiction = 'theoretical';
+
+% Contruct the variable from the class
+gtpr = GTPR(a1, a2, a3, L1, L2, L3, l1, l2, l3, e1, e2, e3, alpha12, alpha13);
+
+% Add the dynamic parameters to the GTPR (Geometry and kinematic functions
+% can be used without setting the dynamic parameters)
+gtpr.setDynamicParameters(mL1, mL2, mL3, ml1, ml2, ml3, mW, IL0_1, IL0_2, IL0_3, Il0_1, Il0_2, Il0_3, g)
+
+
+% Example of direct geometry calculation
+TCP = gtpr.directGeometry(thetas);
+
+% Example of inverse geometry calculation
+qs = gtpr.inverseGeometry(TCP);
+
+% Example of direct kinematics calculation, for velocity
+vs = gtpr.directKinematics(dthetas);
+
+% Example of inverse kinematics calculation, for velocity
+dqs = gtpr.inverseKinematics(v);
+
+% Example of direct kinematics calculation, for acceleration
+a = gtpr.directKinematics_Acceleration(ddthetas, v);
+
+% Example of calculating inverse dynamics
+TCP = gtpr.directGeometry(thetas);
+[tau, ddtheta] = gtpr.inverseDynamics(v,a);
+
+% Calculation of the Center of Mass for each moving part of the GTPR
+CoM = gtpr.CoMs();
+
+% Example of workspace mapping
+% Workspace Mapping:
+qs = rand(1000,3)*pi-pi/2;
+
+
+% Set the resolution of each spatial cube for the workspace mapping
+% resolution = 0.01; %[m]
+% resolution = 0.05; %[m]
+resolution = 0.1; %[m]
+
+figure(1);
+clf;
+hold on;
+xlabel("X");
+ylabel("Y");
+zlabel("Z");
+grid on;
+axis equal;
+
+% Set the actuator angles in between to look map the workspace
+% thetas_map = rand(5000,3)*pi-pi/2;
+% thetas_map = rand(5000,3)*2*pi-pi;
+thetas_map = rand(100,3)*pi;
+
+%get the approximated workspace cuboid:
+ws_cube = gtpr.getCubeAboutRobot(resolution, 'thetas', thetas_map);%, 'edgePlot');
+
+gtpr.plotWS(ws_cube, thetas, resolution);%, 'plotCubes');%, 'plotMechanism'); %, 'depiction', 'real');
+
+% [ws_cube, PtsMapped] = gtpr.MapWorkspace(resolution, 'thetas', thetas_map);
+
+toc
+
+% Within the GTPR Class, there are bitfields in which each bitfield depicts
+% a specific point or line of the GTPR
+skipIdx_plotting = 2:49;
+% skipIdx_plotting = [12:14, 21:49];
+
+% gtpr.plotWSCube(ws_cube, resolution, 'skipIds', skipIdx_plotting);
+
+
+% wci = gtpr.workspaceCoverageIndex(ws_cube, 'plotBoundary');
+
+
+%% THIS Part is still in development
+% The purpose of this is an "automated" mapping of the workspace, where 
+% wci_des = 450; %[%]
+wci_des = 100; %[%]
+
+[ws_cube, mappedData] = gtpr.mapWsUntil_wci(resolution, wci_des);
+%%
+
+clf;
+gtpr.plotWSCube(ws_cube, resolution, 'skipIds', skipIdx_plotting);
+hold on;
+xlabel("X");
+ylabel("Y");
+zlabel("Z");
+wci = gtpr.workspaceCoverageIndex(ws_cube);%, 'plotBoundary');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+for i = 1:10000
+    v = rand(3,1);
+    a = rand(3,1);
+    theta = rand(3,1)*pi/6;
+tic
+% ddtheta = gtpr.inverseKinematics_Acceleration(a, v);
+TCP = gtpr.directGeometry(theta);
+[tau, ddtheta] = gtpr.inverseDynamics(v,a);
+dynTime(i) = toc;
+end
+
+mdynTime = mean(dynTime);
+
+
+
+
+
