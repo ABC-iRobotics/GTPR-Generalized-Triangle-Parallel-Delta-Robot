@@ -9,7 +9,10 @@ The model needs the initial parameters of a GTPR, then it can be run. A short Tu
 # Necessary Files
 All files used are open-source:
  - Olivier (2021). PLOTCUBE (https://www.mathworks.com/matlabcentral/fileexchange/15161-plotcube), MATLAB Central File Exchange. Retrieved September 7, 2021. (Used for plotting the workspace, which is made up of cubes, Thank you Olivier!)
- 
+
+# Inventor Model
+These files are for making a realized, prototype version of the robot, with complete assembly.
+
 # Acknowledgement
 We acknowledge the financial support of this work by the Hungarian State and the European Union under the  EFOP-3.6.1-16-2016-00010 project.
  
